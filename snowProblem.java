@@ -13,21 +13,21 @@ import javax.swing.border.EmptyBorder;
  * @param xxxxx
  * @author Lana Alsalamah
  * @return
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
  **/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 public class SnowProblem extends JFrame {
 
     static final int numberOfBoardRows = 4;
