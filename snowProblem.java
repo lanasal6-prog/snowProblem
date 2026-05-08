@@ -53,33 +53,32 @@ public class SnowProblem extends JFrame {
      * -trees: stores static obstacles that block movement.
      * -phase: tracks the current stage. 
      * -selectedId: recognizes which snowball is currently being controlled.
-     * -moveCount:
+     * -moveCount: counts how many moves the player has made. and reset to 0 on new game.
+     * -currentLevel: keeps track of which game level the player is in.
      *  */
     private final List<Piece> pieces = new ArrayList<>(); 
     private final List<Piece> trees= new ArrayList<>(); 
     private Phase phase = Phase.placeFirstTree;
     private String selectedId = null;
     private int moveCount = 0;
+    private int currentLevel = 1; 
+    private static final int totalLevels = 3; 
     private final JLabel movesLabel = new JLabel("Moves: 0", SwingConstants.CENTER);
+    private final JLabel levelLabel = new JLabel("Level 1", SwingConstants.CENTER); 
 
-    /**-boardSnowProblem: the panel where the game is drawn.
-     * -up/down/left/right: buttons to control pieces movement.
-     * -reset: button to clear the board and reset the game. */
+    //-boardSnowProblem: the panel where the game is drawn.
     private final BoardPanel boardSnowProblem = new BoardPanel();
     private final JLabel message = new JLabel("Place the first tree on the board.", SwingConstants.CENTER);
-    private final JButton up = new JButton("UP");
-    private final JButton down = new JButton("DOWN");
-    private final JButton left = new JButton("LEFT");
-    private final JButton right = new JButton("RIGHT");
     private final JButton reset = new JButton("RESET");
+    private final JButton nextLevel = new JButton("NEXT LEVEL");  
 
     //Board images (trees, small and large snowballs, and snowman head).
     private final Image imageTree = loadImage("/Users/lanaalsalamah/Desktop/snowproblem/snowProblem/tree.png");
     private final Image imageLargeSnowball = loadImage("/Users/lanaalsalamah/Desktop/snowproblem/snowProblem/large snowball.png");
     private final Image imageSmallSnowball = loadImage("/Users/lanaalsalamah/Desktop/snowproblem/snowProblem/small snowball.png");
     private final Image imageSnowmanHead = loadImage("/Users/lanaalsalamah/Desktop/snowproblem/snowProblem/snowman head.png");
-    private final Image imageSnowballsStacked = loadImage("snowmanStack.png");
-    private final Image imageSnowmanComplete = loadImage("snowmanBlue.png");
+    private final Image imageSnowballsStacked = loadImage("/Users/lanaalsalamah/Desktop/snowproblem/snowProblem/snowmanStack.png");
+    private final Image imageSnowmanComplete = loadImage("/Users/lanaalsalamah/Desktop/snowproblem/snowProblem/snowmanBlue.png");
 
     // Setting up the BorderLayout, adding the title, game board, and a grid based control panel with movement buttons.
     public SnowProblem() {
@@ -90,7 +89,6 @@ public class SnowProblem extends JFrame {
         setLayout (new BorderLayout(10, 10));
         ((JComponent) getContentPane()).setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        JLabel levelLabel = new JLabel("Level 1", SwingConstants.CENTER); // Add a text lable using JLable class to display level 1 and centering it.
        levelLabel.setFont(levelLabel.getFont().deriveFont(Font.BOLD, 16f)); //Set the font type and size.
 
        JLabel lableSnowProblem = new JLabel ("Snow Problem", SwingConstants.CENTER); // Add a text lable using JLable class to display the game title and centering it.
@@ -108,24 +106,18 @@ public class SnowProblem extends JFrame {
         JPanel south = new JPanel(new BorderLayout(8, 8));
         message.setFont(message.getFont().deriveFont(Font.PLAIN,14f));
         south.add(message, BorderLayout.NORTH);
-        // Setup the button layout. A 3x3 grid with the UP, DOWN, LEFT, RIGHT, and RESET.
-        JPanel controls = new JPanel(new GridLayout(3, 3 , 4, 4));
-        controls.add(new JLabel()); controls.add(up); controls.add(new JLabel());
-        controls.add(left); controls.add(reset); controls.add(right);
-        controls.add(new JLabel()); controls.add(down); controls.add(new JLabel());
+        JPanel controls = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        controls.add(reset);
+        controls.add(nextLevel);
         south.add(controls, BorderLayout.CENTER);
         
         add(south, BorderLayout.SOUTH); // Places the messages and buttons at the bottom of the window.
-        /*Specify the actions for the buttons using class addActionListener.
-        References:
-        https://docs.oracle.com/javase/tutorial/uiswing/events/actionlistener.html
-        https://www.geeksforgeeks.org/advance-java/java-actionlistener-in-awt/ */
-        up.addActionListener(e -> movePiece(0, -1));
-        down.addActionListener(e -> movePiece(0, 1));
-        left.addActionListener(e -> movePiece(-1, 0));
-        right.addActionListener(e -> movePiece(1, 0));
-        reset.addActionListener(e -> resetGame());
-
+        reset.addActionListener(e -> resetGame()); // Reset button click and restart the game.
+        // Switch to the next level and reset the game board.
+        nextLevel.addActionListener(e -> {
+            currentLevel = (currentLevel % totalLevels) + 1;
+            resetGame();
+        });
         setSize(600, 700); // Size of the game window.
         setLocationRelativeTo(null);
         updateControls();
@@ -141,25 +133,47 @@ public class SnowProblem extends JFrame {
     // Resets the game, places the starting pieces, and refreshes the UI.
     private void resetGame() {
         pieces.clear();
+        trees.clear();
         selectedId = null;
         moveCount = 0;
         movesLabel.setText("Moves: " + moveCount);
-        pieces.add(new Piece("head", Kind.snowmanHeadImage, 0, 3)); //
-        pieces.add(new Piece("large", Kind.largeSnowballImage, 4, 3)); //
-        pieces.add(new Piece("small", Kind.smallSnowballImage, 1, 0)); //
+        levelLabel.setText("Level " + currentLevel);
+        loadLevel(currentLevel);
         phase = Phase.playStage;
         setMessage("Pick a snowball or the head, then press an arrow.");
         updateControls();
         boardSnowProblem.repaint();
     }
 
+    // The levels
+    private void loadLevel(int level) {
+        switch (level) {
+            case 1:
+                pieces.add(new Piece("head", Kind.snowmanHeadImage, 0, 3));
+                pieces.add(new Piece("large", Kind.largeSnowballImage, 4, 3));
+                pieces.add(new Piece("small", Kind.smallSnowballImage, 1, 0));
+                break;
+            case 2:
+                trees.add(new Piece("tree1", Kind.treeImage, 2, 0));
+                trees.add(new Piece("tree2", Kind.treeImage, 3, 3));
+                pieces.add(new Piece("head", Kind.snowmanHeadImage, 0, 2));
+                pieces.add(new Piece("large", Kind.largeSnowballImage, 1, 2));
+                pieces.add(new Piece("small", Kind.smallSnowballImage, 4, 0));
+                break;
+            case 3:
+                trees.add(new Piece("tree1", Kind.treeImage, 2, 0));
+                trees.add(new Piece("tree2", Kind.treeImage, 4, 1));
+                pieces.add(new Piece("head",  Kind.snowmanHeadImage,    0, 1));
+                pieces.add(new Piece("large", Kind.largeSnowballImage,  0, 3));
+                pieces.add(new Piece("small", Kind.smallSnowballImage,  2, 3));
+                break;
+        }
+    }
+
     private void setMessage(String s) {message.setText(s);} // Refreshes the instructions and status.
 
-    // Enables movement buttons only when a piece is selected.
+    // Placeholder method.
     private void updateControls() {
-        boolean playing = phase == Phase.playStage && selectedId != null;
-        up.setEnabled(playing); down.setEnabled(playing);
-        left.setEnabled(playing); right.setEnabled(playing);
     }
 
     // Returns the piece or tree located at a specific grid position (column, row).
@@ -170,15 +184,59 @@ public class SnowProblem extends JFrame {
     }
 
     // Manages the clicks on a board cell to select or deselect a movable piece.
-    private void handleCellClick(int selectedBoardColumn, int selectedBoardRow) {
-       if (phase != Phase.playStage) return;
-       Piece p = pieceAt(selectedBoardColumn, selectedBoardRow);
-       if (p != null && p.kind != Kind.treeImage) {
-        selectedId = p.id.equals(selectedId) ? null : p.id;
-        setMessage(selectedId == null ? "Pick a piece." : "Selected: " + selectedId);
+    private void handleCellClick(int col, int row) {
+      Piece clicked = pieceAt(col, row);
+      // If no piece is selected, select the clicked piece.
+      if (selectedId == null) {
+        if (clicked != null && clicked.kind != Kind.treeImage) {
+            selectedId = clicked.id;
+            setMessage("Selected: " + selectedId + ". Click a cell to choose direction.");
+            boardSnowProblem.repaint();
+            updateControls();
+        }
+        return;
+      }
+      // Looks up the selected piece if it's no longer exists, it clears the selection.
+      Piece sel = findPieceById(selectedId);
+      if (sel == null) {
+        selectedId = null;
+        boardSnowProblem.repaint();
+        return;
+      }
+      // Tapping the selected piece agaain cancels the selection.
+      if (clicked != null && clicked.id != null && clicked.id.equals(selectedId)) {
+        selectedId = null;
+        setMessage("Deselected.");
         boardSnowProblem.repaint();
         updateControls();
-       }
+        return;
+      }
+      // Calculate the row and col distance from the selected piece to the clicked cell.
+      int dr = row - sel.selectedBoardRow;
+      int dc = col - sel.selectedBoardColumn;
+      // If the click is a straight line, slide the piece at that direction.
+      if ((dr == 0) ^ (dc == 0)) {
+        int stepC = Integer.signum(dc);
+        int stepR = Integer.signum(dr);
+        movePiece(stepC, stepR);
+        return;
+      }
+      // If clicked another piece, switch selection to it.
+      if (clicked != null && clicked.kind != Kind.treeImage) {
+        selectedId = clicked.id;
+        setMessage("Selected: " + selectedId + ". Click a cell to choose direction.");
+        boardSnowProblem.repaint();
+        updateControls();
+        return;
+      }
+      setMessage("Click a cell in the same row or column as the selected piece.");
+    }
+
+    // Finds and returns the piece with the given id or null if not found.
+    private Piece findPieceById(String id) {
+        if (id == null) return null;
+        for (Piece p : pieces) if (id.equals(p.id)) return p;
+        return null;
     }
 
     // Checks if the large snowball, small snowball, and snowman head are all stacked on the same square.
@@ -277,7 +335,11 @@ public class SnowProblem extends JFrame {
         boardSnowProblem.repaint();
         if (checkWin()) {
             phase = Phase.builtSnowman;
-            setMessage("Yay! You rebuilt the snowman");
+            if (currentLevel < totalLevels) {
+                setMessage("Level " + currentLevel + "complete! Press NEXT LEVEL.");
+            } else {
+                setMessage("Yay! You finished all " + totalLevels + " levels!");
+            } 
         } else {
             setMessage("Nice. Pick another piece.");
         }
